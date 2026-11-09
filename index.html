@@ -142,6 +142,9 @@
   .userstrip .code{font-weight:800;color:var(--ink);letter-spacing:.08em}
   .userstrip .sp{flex:1}
   .userstrip button{background:none;border:none;color:var(--accent2);font-size:.82rem;cursor:pointer;font-weight:700}
+  .gradestrip{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:0 2px 6px rgba(27,35,64,.04)}
+  .gradestrip .glabel{font-size:.9rem;font-weight:800;color:var(--ink)}
+  .gradestrip .gnote{font-size:.78rem;color:var(--ink2)}
   .toolrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
   .toolbtn{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;font-size:.98rem;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(27,35,64,.05)}
   .toolbtn small{display:block;font-weight:400;color:var(--ink2);font-size:.78rem;margin-top:4px}
@@ -180,6 +183,13 @@
       <span class="sp"></span>
       <span id="userStats"></span>
       <button id="btnSwitchCode">切换编号</button>
+    </div>
+    <div class="gradestrip">
+      <span class="glabel">年级</span>
+      <button class="chipbtn gbtn" data-g="四年级">四年级</button>
+      <button class="chipbtn gbtn" data-g="五年级">五年级</button>
+      <button class="chipbtn gbtn" data-g="六年级">六年级</button>
+      <span class="gnote">选一次就行，成绩单上会带年级</span>
     </div>
     <div class="countrow">
       <span>每组题量</span>
@@ -339,6 +349,10 @@ const LS={
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 };
 let USER_CODE = LS.get("qb_code","");
+let USER_GRADE = LS.get("qb_grade","");
+function renderGrade(){
+  document.querySelectorAll(".gbtn").forEach(b=>b.classList.toggle("on", b.dataset.g===USER_GRADE));
+}
 const ACCESS_CODE = "KXJN2026"; /* 联系编码：只认这一串，改编码改这里 */
 function wrongKey(mod,q){ return mod+"|"+(q.question||q.stem||"")+"|"+(typeof (q.options||[])[0]==="string" ? q.options[0] : (q.cells?("c"+q.cells.length):"")); }
 function getWrongs(){ return LS.get("qb_wrongs",[]); }
@@ -361,6 +375,7 @@ function updateStrip(){
   const ex=recs.filter(r=>r.type==="模拟考试").length, pr=recs.length-ex;
   const st=$("userStats"); if(st) st.textContent="考试 "+ex+" 次 · 练习 "+pr+" 次";
   updateWbCount();
+  renderGrade();
 }
 
 /* ---------- 图形渲染 ---------- */
@@ -785,7 +800,7 @@ function finishExam(how){
   const usedSec=Math.round((Date.now()-EXAM.startAt)/1000);
   const usedTxt=Math.floor(usedSec/60)+" 分 "+(usedSec%60)+" 秒";
   hideAllSections(); $("examResult").classList.remove("hidden");
-  $("examMeta").textContent="学籍号 "+EXAM.sid+" · 用时 "+usedTxt+(how?" · "+how:"");
+  $("examMeta").textContent="学籍号 "+EXAM.sid+(USER_GRADE?(" · "+USER_GRADE):"")+" · 用时 "+usedTxt+(how?" · "+how:"");
   const total=EXAM.totalScored, right=EXAM.totalRight;
   $("examBig").innerHTML= right+' <em>/ '+total+'</em>';
   const pct= total? Math.round(right/total*100):0;
@@ -815,6 +830,11 @@ $("btnExamAgain").addEventListener("click",()=>{ hideAllSections(); $("examIntro
 $("btnExamHome").addEventListener("click",()=>{ hideAllSections(); homeEl.classList.remove("hidden"); renderHome(); });
 
 /* ---------- 门禁 / 成绩档案 / 错题本视图 ---------- */
+document.querySelectorAll(".gbtn").forEach(b=>b.addEventListener("click",()=>{
+  USER_GRADE = (USER_GRADE===b.dataset.g) ? "" : b.dataset.g;
+  LS.set("qb_grade",USER_GRADE);
+  renderGrade();
+}));
 $("btnGate").addEventListener("click",()=>{
   const v=$("gateInput").value.trim().toUpperCase();
   if(v!==ACCESS_CODE){ $("gateHint").innerHTML="编号不对：请核对发放人给的联系编码再输。"; return; }
