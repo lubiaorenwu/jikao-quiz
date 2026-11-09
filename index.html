@@ -164,8 +164,8 @@
       <div class="logomark">考</div>
       <h1>科学嘉年华 · 机考模拟系统</h1>
       <p class="gsub">图形推理 · 瞬时记忆 · 折纸穿洞 · 文字推演 · 心理测试</p>
-      <input id="gateInput" type="text" autocomplete="off" maxlength="12" placeholder="请输入练习编号">
-      <p class="ghint" id="gateHint">练习编号由发放人提供（字母和数字组成）。<br>在本机输入一次即可，之后直接进入。</p>
+      <input id="gateInput" type="text" autocomplete="off" maxlength="12" placeholder="请输入孩子姓名">
+      <p class="ghint" id="gateHint">填上名字就能进，不用编号。<br>在本机输一次即可，之后直接进入。</p>
       <button class="startbtn" id="btnGate">进入系统</button>
       <p class="ghint" style="margin-top:16px">本系统仅用于熟悉题型与节奏，题目由程序按题型模板生成，与学校实际考题无关。</p>
     </div>
@@ -179,10 +179,10 @@
       <div class="heropills"><span>📚 335 道题</span><span>🧩 5 大模块</span><span>📝 全真模拟考试</span></div>
     </header>
     <div class="userstrip">
-      <span>练习编号 <span class="code" id="userCodeChip">—</span></span>
+      <span>姓名 <span class="code" id="userCodeChip">—</span></span>
       <span class="sp"></span>
       <span id="userStats"></span>
-      <button id="btnSwitchCode">切换编号</button>
+      <button id="btnSwitchCode">换名字</button>
     </div>
     <div class="gradestrip">
       <span class="glabel">年级</span>
@@ -348,12 +348,11 @@ const LS={
   get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 };
-let USER_CODE = LS.get("qb_code","");
+let USER_CODE = LS.get("qb_name","");
 let USER_GRADE = LS.get("qb_grade","");
 function renderGrade(){
   document.querySelectorAll(".gbtn").forEach(b=>b.classList.toggle("on", b.dataset.g===USER_GRADE));
 }
-const ACCESS_CODE = "KXJN2026"; /* 联系编码：只认这一串，改编码改这里 */
 function wrongKey(mod,q){ return mod+"|"+(q.question||q.stem||"")+"|"+(typeof (q.options||[])[0]==="string" ? q.options[0] : (q.cells?("c"+q.cells.length):"")); }
 function getWrongs(){ return LS.get("qb_wrongs",[]); }
 function addWrong(mod,q){
@@ -800,7 +799,7 @@ function finishExam(how){
   const usedSec=Math.round((Date.now()-EXAM.startAt)/1000);
   const usedTxt=Math.floor(usedSec/60)+" 分 "+(usedSec%60)+" 秒";
   hideAllSections(); $("examResult").classList.remove("hidden");
-  $("examMeta").textContent="学籍号 "+EXAM.sid+(USER_GRADE?(" · "+USER_GRADE):"")+" · 用时 "+usedTxt+(how?" · "+how:"");
+  $("examMeta").textContent="姓名 "+USER_CODE+" · 学籍号 "+EXAM.sid+(USER_GRADE?(" · "+USER_GRADE):"")+" · 用时 "+usedTxt+(how?" · "+how:"");
   const total=EXAM.totalScored, right=EXAM.totalRight;
   $("examBig").innerHTML= right+' <em>/ '+total+'</em>';
   const pct= total? Math.round(right/total*100):0;
@@ -836,15 +835,15 @@ document.querySelectorAll(".gbtn").forEach(b=>b.addEventListener("click",()=>{
   renderGrade();
 }));
 $("btnGate").addEventListener("click",()=>{
-  const v=$("gateInput").value.trim().toUpperCase();
-  if(v!==ACCESS_CODE){ $("gateHint").innerHTML="编号不对：请核对发放人给的联系编码再输。"; return; }
-  USER_CODE=v; LS.set("qb_code",v);
+  const v=$("gateInput").value.trim();
+  if(!/^[一-龥A-Za-z·]{2,10}$/.test(v)){ $("gateHint").innerHTML="名字不太对：填 2–10 个汉字或字母再试。"; return; }
+  USER_CODE=v; LS.set("qb_name",v);
   hideAllSections(); homeEl.classList.remove("hidden"); renderHome();
 });
 $("gateInput").addEventListener("keydown",e=>{ if(e.key==="Enter") $("btnGate").click(); });
 $("btnSwitchCode").addEventListener("click",()=>{
-  if(!confirm("切换编号？成绩档案和错题本是按本机存的，不会丢；新编号只是换一个练习身份。")) return;
-  USER_CODE=""; LS.set("qb_code","");
+  if(!confirm("换个名字？成绩档案和错题本是按本机存的，不会丢；只是换一个练习身份。")) return;
+  USER_CODE=""; LS.set("qb_name","");
   hideAllSections(); $("gate").classList.remove("hidden"); $("gateInput").value="";
 });
 $("btnRecords").addEventListener("click",()=>{
@@ -873,7 +872,7 @@ $("btnWbClear").addEventListener("click",()=>{ if(confirm("清空错题本？"))
 $("btnWbStart").addEventListener("click",()=>{ $("wrongView").classList.add("hidden"); startSession(null,false,"wrongbook"); });
 
 renderHome();
-if(USER_CODE!==ACCESS_CODE){ if(USER_CODE){ USER_CODE=""; LS.set("qb_code",""); } hideAllSections(); $("gate").classList.remove("hidden"); }
+if(!USER_CODE){ hideAllSections(); $("gate").classList.remove("hidden"); }
 </script>
 </body>
 </html>
