@@ -339,6 +339,7 @@ const LS={
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 };
 let USER_CODE = LS.get("qb_code","");
+const ACCESS_CODE = "KXJN2026"; /* 联系编码：只认这一串，改编码改这里 */
 function wrongKey(mod,q){ return mod+"|"+(q.question||q.stem||"")+"|"+(typeof (q.options||[])[0]==="string" ? q.options[0] : (q.cells?("c"+q.cells.length):"")); }
 function getWrongs(){ return LS.get("qb_wrongs",[]); }
 function addWrong(mod,q){
@@ -816,7 +817,7 @@ $("btnExamHome").addEventListener("click",()=>{ hideAllSections(); homeEl.classL
 /* ---------- 门禁 / 成绩档案 / 错题本视图 ---------- */
 $("btnGate").addEventListener("click",()=>{
   const v=$("gateInput").value.trim().toUpperCase();
-  if(!/^[A-Z0-9]{4,12}$/.test(v)){ $("gateHint").innerHTML="编号不对：要是 4–12 位字母或数字，检查一下再输。"; return; }
+  if(v!==ACCESS_CODE){ $("gateHint").innerHTML="编号不对：请核对发放人给的联系编码再输。"; return; }
   USER_CODE=v; LS.set("qb_code",v);
   hideAllSections(); homeEl.classList.remove("hidden"); renderHome();
 });
@@ -852,7 +853,7 @@ $("btnWbClear").addEventListener("click",()=>{ if(confirm("清空错题本？"))
 $("btnWbStart").addEventListener("click",()=>{ $("wrongView").classList.add("hidden"); startSession(null,false,"wrongbook"); });
 
 renderHome();
-if(!USER_CODE){ hideAllSections(); $("gate").classList.remove("hidden"); }
+if(USER_CODE!==ACCESS_CODE){ if(USER_CODE){ USER_CODE=""; LS.set("qb_code",""); } hideAllSections(); $("gate").classList.remove("hidden"); }
 </script>
 </body>
 </html>
